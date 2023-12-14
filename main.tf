@@ -57,7 +57,7 @@ module "infra_prod_natgw" {
 module "infra_prod_public_route_table" {
   source     = "./modules/public_route_table"
   vpc_id     = module.infra_prod_vpc.id
-  name       = "infra-prod-public-rt"
+  name       = "${module.infra_prod_vpc.name}-public-rt"
   routes     = [{ cidr_block = "0.0.0.0/0", gateway_id = module.infra_prod_igw.id }]
   subnet_ids = { for subnet in module.infra_prod_public_subnets : subnet.id => subnet.id }
 }
