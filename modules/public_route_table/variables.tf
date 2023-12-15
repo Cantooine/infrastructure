@@ -9,7 +9,3 @@ variable "name" {
 variable "routes" {
   type = list(map(string))
 }
-
-variable "subnet_ids" {
-  type = map(string)
-}

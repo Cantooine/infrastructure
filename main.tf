@@ -59,7 +59,12 @@ module "infra_prod_public_route_table" {
   vpc_id     = module.infra_prod_vpc.id
   name       = "${module.infra_prod_vpc.name}-public-rt"
   routes     = [{ cidr_block = "0.0.0.0/0", gateway_id = module.infra_prod_igw.id }]
-  subnet_ids = { for subnet in module.infra_prod_public_subnets : subnet.id => subnet.id }
+}
+
+resource "aws_route_table_association" "infra_prod_public_rt_association" {
+  for_each       = module.infra_prod_public_subnets
+  route_table_id = module.infra_prod_public_route_table.id
+  subnet_id      = each.value.id
 }
 
 module "infra_prod_private_route_table" {
