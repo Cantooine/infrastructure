@@ -80,6 +80,26 @@ module "infra_prod_ecs_cluster" {
   cluster_name = "infra-prod-ecs-cluster"
 }
 
+module "ecs_service_role" {
+  source    = "./modules/iam_role"
+  role_name = "infra-prod-ecs-service-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+      },
+    ],
+  })
+  policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  ]
+}
+
 module "infra_prod_backend_ecs_sg" {
   source              = "./modules/security_group"
   security_group_name = "infra-prod-backend-ecs-sg"
@@ -138,100 +158,6 @@ module "infra_prod_frontend_ecs_sg" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   ]
-}
-
-module "backend_ecs_task_definition" {
-  source             = "./modules/ecs_task_definition"
-  family             = "backend"
-  network_mode       = "awsvpc"
-  task_role_arn      = "arn:aws:iam::123456789012:role/ecsTaskExecutionRole"
-  execution_role_arn = "arn:aws:iam::123456789012:role/ecsTaskExecutionRole"
-  cpu                = "256"
-  memory             = "512"
-  container_definitions = [
-    {
-      name  = "backend"
-      image = "hello-world"
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-    }
-  ]
-}
-
-module "frontend_ecs_task_definition" {
-  source             = "./modules/ecs_task_definition"
-  family             = "frontend"
-  network_mode       = "awsvpc"
-  task_role_arn      = "arn:aws:iam::123456789012:role/ecsTaskExecutionRole"
-  execution_role_arn = "arn:aws:iam::123456789012:role/ecsTaskExecutionRole"
-  cpu                = "256"
-  memory             = "512"
-  container_definitions = [
-    {
-      name  = "frontend"
-      image = "hello-world"
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-    }
-  ]
-}
-
-module "frontend_ecs_service" {
-  source          = "./modules/ecs_service"
-  service_name    = "frontend-service"
-  cluster_id      = module.infra_prod_ecs_cluster.cluster_id
-  task_definition = module.frontend_ecs_task_definition.arn
-  launch_type     = "FARGATE"
-  subnets         = [for subnet in module.infra_prod_private_subnets : subnet.id]
-  security_groups = [module.infra_prod_frontend_ecs_sg.id]
-  desired_count   = 2
-  load_balancers = [{
-    target_group_arn = module.frontend_target_group.arn
-    container_name   = "frontend"
-    container_port   = 80
-  }]
-}
-
-module "frontend_ecs_service_autoscaling" {
-  source             = "./modules/ecs_autoscaling"
-  service_arn        = module.frontend_ecs_service.arn
-  cluster_name       = module.infra_prod_ecs_cluster.name
-  min_capacity       = 1
-  max_capacity       = 5
-  target_utilization = 70
-}
-
-module "backend_ecs_service" {
-  source          = "./modules/ecs_service"
-  service_name    = "backend-service"
-  cluster_id      = module.infra_prod_ecs_cluster.cluster_id
-  task_definition = module.backend_ecs_task_definition.arn
-  launch_type     = "FARGATE"
-  subnets         = [for subnet in module.infra_prod_private_subnets : subnet.id]
-  security_groups = [module.infra_prod_backend_ecs_sg.id]
-  desired_count   = 2
-  load_balancers = [{
-    target_group_arn = module.backend_target_group.arn
-    container_name   = "backend"
-    container_port   = 80
-  }]
-}
-
-module "backend_ecs_service_autoscaling" {
-  source             = "./modules/ecs_autoscaling"
-  service_arn        = module.backend_ecs_service.arn
-  cluster_name       = module.infra_prod_ecs_cluster.name
-  min_capacity       = 1
-  max_capacity       = 5
-  target_utilization = 70
 }
 
 module "infra_prod_backend_int_lb_sg" {
@@ -294,40 +220,161 @@ module "infra_prod_frontend_ext_lb_sg" {
   ]
 }
 
-module "frontend_target_group" {
-  source = "./modules/target_group"
-  name   = "infra-prod-frontend-tg"
-  port   = 80
-  vpc_id = module.infra_prod_vpc.id
-  tags   = { "Name" = "infra-prod-frontend-tg" }
+module "infra_prod_backend_int_lb" {
+  source                     = "./modules/alb"
+  alb_name                   = "infra-prod-backend-int-lb"
+  is_internal                = true
+  vpc_id                     = module.infra_prod_vpc.id
+  subnet_ids                 = [for subnet in module.infra_prod_private_subnets : subnet.id]
+  security_group_ids         = [module.infra_prod_backend_int_lb_sg.id]
+  enable_deletion_protection = false #Production-ready=true
+
+  target_group_name        = "infra-prod-backend-tg"
+  target_group_target_type = "ip"
+  target_group_port        = 80
+  target_group_protocol    = "HTTP"
+  listener_port            = 80
+  listener_protocol        = "HTTP"
+
+  health_check = {
+    enabled             = true
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+
+  deregistration_delay = 300
+  tags                 = { "Name" = "infra-prod-backend-tg" }
 }
 
-module "backend_target_group" {
-  source = "./modules/target_group"
-  name   = "infra-prod-backend-tg"
-  port   = 80
-  vpc_id = module.infra_prod_vpc.id
-  tags   = { "Name" = "infra-prod-backend-tg" }
+module "infra_prod_frontend_ext_lb" {
+  source                     = "./modules/alb"
+  alb_name                   = "infra-prod-frontend-ext-lb"
+  is_internal                = false
+  vpc_id                     = module.infra_prod_vpc.id
+  subnet_ids                 = [for subnet in module.infra_prod_public_subnets : subnet.id]
+  security_group_ids         = [module.infra_prod_frontend_ext_lb_sg.id]
+  enable_deletion_protection = false #Production-ready=true
+  target_group_name          = "infra-prod-frontend-tg"
+  target_group_target_type   = "ip"
+  target_group_port          = 80
+  target_group_protocol      = "HTTP"
+  listener_port              = 80
+  listener_protocol          = "HTTP"
+  health_check = {
+    enabled             = true
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+  deregistration_delay = 300
+  tags                 = { "Name" = "infra-prod-frontend-tg" }
 }
 
-module "backend_int_lb" {
-  source             = "./modules/alb"
-  alb_name           = "infra-prod-backend-int-lb"
-  vpc_id             = module.infra_prod_vpc.id
-  subnet_ids         = [for subnet in module.infra_prod_private_subnets : subnet.id]
-  security_group_ids = [module.infra_prod_backend_int_lb_sg.id]
-  target_group_name  = module.backend_target_group.name
-  health_check_path  = "/"
-  listener_port      = 80
+module "backend_ecs_task_definition" {
+  source             = "./modules/ecs_task_definition"
+  family             = "backend"
+  network_mode       = "awsvpc"
+  task_role_arn      = module.ecs_service_role.arn
+  execution_role_arn = module.ecs_service_role.arn
+  cpu                = "256"
+  memory             = "512"
+  container_definitions = [
+    {
+      name  = "backend"
+      image = "nginx:latest"
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+        }
+      ]
+    }
+  ]
 }
 
-module "frontend_ext_lb" {
-  source             = "./modules/alb"
-  alb_name           = "infra-prod-frontend-ext-lb"
-  vpc_id             = module.infra_prod_vpc.id
-  subnet_ids         = [for subnet in module.infra_prod_public_subnets : subnet.id]
-  security_group_ids = [module.infra_prod_frontend_ext_lb_sg.id]
-  target_group_name  = module.frontend_target_group.name
-  health_check_path  = "/"
-  listener_port      = 80
+module "frontend_ecs_task_definition" {
+  source             = "./modules/ecs_task_definition"
+  family             = "frontend"
+  network_mode       = "awsvpc"
+  task_role_arn      = module.ecs_service_role.arn
+  execution_role_arn = module.ecs_service_role.arn
+  cpu                = "256"
+  memory             = "512"
+  container_definitions = [
+    {
+      name  = "frontend"
+      image = "nginx:latest"
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+        }
+      ]
+    }
+  ]
+}
+
+module "frontend_ecs_service" {
+  source          = "./modules/ecs_service"
+  service_name    = "frontend-service"
+  cluster_id      = module.infra_prod_ecs_cluster.cluster_id
+  task_definition = module.frontend_ecs_task_definition.arn
+  launch_type     = "FARGATE"
+  subnets         = [for subnet in module.infra_prod_private_subnets : subnet.id]
+  security_groups = [module.infra_prod_frontend_ecs_sg.id]
+  desired_count   = 2
+  load_balancers = [{
+    target_group_arn = module.infra_prod_frontend_ext_lb.target_group_arn
+    container_name   = "frontend"
+    container_port   = 80
+  }]
+  depends_on = [module.infra_prod_frontend_ext_lb]
+}
+
+module "frontend_ecs_service_autoscaling" {
+  source              = "./modules/ecs_autoscaling"
+  service_name        = module.frontend_ecs_service.name
+  cluster_name        = module.infra_prod_ecs_cluster.name
+  min_capacity        = 3
+  max_capacity        = 10
+  target_utilization  = 70
+  scale_down_cooldown = 400
+  scale_up_cooldown   = 200
+}
+
+module "backend_ecs_service" {
+  source          = "./modules/ecs_service"
+  service_name    = "backend-service"
+  cluster_id      = module.infra_prod_ecs_cluster.cluster_id
+  task_definition = module.backend_ecs_task_definition.arn
+  launch_type     = "FARGATE"
+  subnets         = [for subnet in module.infra_prod_private_subnets : subnet.id]
+  security_groups = [module.infra_prod_backend_ecs_sg.id]
+  desired_count   = 2
+  load_balancers = [{
+    target_group_arn = module.infra_prod_backend_int_lb.target_group_arn
+    container_name   = "backend"
+    container_port   = 80
+  }]
+  depends_on = [module.infra_prod_backend_int_lb]
+}
+
+module "backend_ecs_service_autoscaling" {
+  source              = "./modules/ecs_autoscaling"
+  service_name        = module.backend_ecs_service.name
+  cluster_name        = module.infra_prod_ecs_cluster.name
+  min_capacity        = 3
+  max_capacity        = 10
+  target_utilization  = 70
+  scale_down_cooldown = 400
+  scale_up_cooldown   = 200
 }

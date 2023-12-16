@@ -1,8 +1,3 @@
-variable "service_arn" {
-  description = "The ARN of the ECS service to apply the autoscaling."
-  type        = string
-}
-
 variable "cluster_name" {
   description = "The name of the ECS cluster where the service is deployed."
   type        = string
@@ -36,4 +31,9 @@ variable "target_utilization" {
   description = "The target value for the metric. Auto Scaling adjusts the number of tasks to keep the metric at this value."
   type        = number
   default     = 70
+}
+
+variable "service_name" {
+  description = "The name of the ECS service"
+  type        = string
 }
