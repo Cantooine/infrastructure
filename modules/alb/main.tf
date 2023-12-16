@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "tg" {
 
   deregistration_delay = var.deregistration_delay
 
-  tags = var.tags
+  tags = var.tg_tags
 }
 
 resource "aws_lb_listener" "listener" {

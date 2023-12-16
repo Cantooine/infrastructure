@@ -233,6 +233,7 @@ module "infra_prod_backend_int_lb" {
   target_group_target_type = "ip"
   target_group_port        = 80
   target_group_protocol    = "HTTP"
+  tg_tags                  = { "Name" = "infra-prod-backend-tg" }
   listener_port            = 80
   listener_protocol        = "HTTP"
 
@@ -248,7 +249,6 @@ module "infra_prod_backend_int_lb" {
   }
 
   deregistration_delay = 300
-  tags                 = { "Name" = "infra-prod-backend-tg" }
 }
 
 module "infra_prod_frontend_ext_lb" {
@@ -263,6 +263,7 @@ module "infra_prod_frontend_ext_lb" {
   target_group_target_type   = "ip"
   target_group_port          = 80
   target_group_protocol      = "HTTP"
+  tg_tags                    = { "Name" = "infra-prod-frontend-tg" }
   listener_port              = 80
   listener_protocol          = "HTTP"
   health_check = {
@@ -276,7 +277,6 @@ module "infra_prod_frontend_ext_lb" {
     unhealthy_threshold = 3
   }
   deregistration_delay = 300
-  tags                 = { "Name" = "infra-prod-frontend-tg" }
 }
 
 module "backend_ecs_task_definition" {
