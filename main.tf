@@ -111,12 +111,6 @@ module "infra_prod_backend_ecs_sg" {
       to_port     = 80
       protocol    = "tcp"
       cidr_blocks = [for subnet in local.private_subnets : subnet.cidr]
-    },
-    {
-      from_port   = 443
-      to_port     = 443
-      protocol    = "tcp"
-      cidr_blocks = [for subnet in local.private_subnets : subnet.cidr]
     }
   ])
 
@@ -139,12 +133,6 @@ module "infra_prod_frontend_ecs_sg" {
     {
       from_port   = 80
       to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = [for subnet in local.public_subnets : subnet.cidr]
-    },
-    {
-      from_port   = 443
-      to_port     = 443
       protocol    = "tcp"
       cidr_blocks = [for subnet in local.public_subnets : subnet.cidr]
     }
