@@ -1,6 +1,6 @@
 resource "aws_eip" "nat_eip" {
   lifecycle {
-    create_before_destroy = true
+    create_before_destroy = false #production-ready=true 
   }
 }
 
