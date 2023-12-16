@@ -6,7 +6,7 @@ Bu repo, Terraform ile AWS üzerinde highly available ve scalable bir web uygula
 
 ## Önkoşullar
 * AWS Hesabı
-* Terraform kurulumu
+* Terraform kurulumu (Terraform 1.5.7 ve hashicorp/aws 5.31.0 ile test edildi.)
 * AWS CLI kurulumu ve yapılandırılması
 
 ## Özet
