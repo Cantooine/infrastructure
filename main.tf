@@ -151,7 +151,7 @@ module "backend_ecs_task_definition" {
   container_definitions = [
     {
       name  = "backend"
-      image = "my-backend-image"
+      image = "hello-world"
       portMappings = [
         {
           containerPort = 80
@@ -173,7 +173,7 @@ module "frontend_ecs_task_definition" {
   container_definitions = [
     {
       name  = "frontend"
-      image = "my-frontend-image"
+      image = "hello-world"
       portMappings = [
         {
           containerPort = 80
