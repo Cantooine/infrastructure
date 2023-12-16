@@ -44,7 +44,7 @@ Subnet CIDR'ları maksimum IP alabilecek şekilde ayarlanmıştır. Bu ileriye d
 
 Her AZ için, bir NAT Gateway oluşturulmuştur. Bu yapı AZ'leri birbirinden izole eder. Bir AZ'de sorun olması veya bir AZ'nin route table'ında sorunlu bir konfigürasyon yapılması durumunda, diğer AZ'ler bundan etkilenmez ve internet bağlantıları kesilmez. Bu tercih projeden projeye değişebilmekle birlikte, highly available olmanın hayati olduğu projelerde en az iki NAT Gateway konfigüre etmek önemlidir.
 
-Backend ECS servisi private subnetlerde çalışmakta olduğundan, IP filtering yapan external kaynaklara erişebilmesi için NAT Gateway'in dışarı çıkan IP adreslerini ilgili yetkililere beyan etmek yeterli olacaktır.
+Backend ECS servisi private subnetlerde çalışmakta olduğundan, IP filtering yapan external kaynaklara erişebilmesi için NAT Gateway'lerin dışarı çıkan IP adreslerini ilgili yetkililere beyan etmek yeterli olacaktır.
 
 Frontend, backend ile internal load balancer üzerinden iletişim kurar. Service discovery'e kıyasla bu implementasyonun yük dengeleme, health check ve otomatik yönlendirme gibi bazı avantajları olur. Bu avantajlar high availability'e ve fault tolerance'a katkıda bulunur.
 
