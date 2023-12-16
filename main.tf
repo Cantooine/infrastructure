@@ -237,6 +237,14 @@ module "infra_prod_backend_int_lb" {
   }
 
   deregistration_delay = 300
+
+  listener_priority = 1
+
+  listener_conditions = [
+    {
+      path_pattern = "/*"
+    }
+  ]
 }
 
 module "infra_prod_frontend_ext_lb" {
@@ -265,6 +273,14 @@ module "infra_prod_frontend_ext_lb" {
     unhealthy_threshold = 3
   }
   deregistration_delay = 300
+
+  listener_priority = 1
+
+  listener_conditions = [
+    {
+      path_pattern = "/*"
+    }
+  ]
 }
 
 module "backend_ecs_task_definition" {

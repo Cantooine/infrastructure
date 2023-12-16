@@ -85,3 +85,17 @@ variable "target_group_target_type" {
   description = "The target type of the target group"
   type        = string
 }
+
+variable "listener_priority" {
+  type        = number
+  description = "The priority for the listener rule"
+}
+
+variable "listener_conditions" {
+  description = "A list of conditions for the listener rule."
+  type = list(object({
+    path_pattern = string
+  }))
+  default = []
+}
+

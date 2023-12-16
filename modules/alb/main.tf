@@ -41,7 +41,31 @@ resource "aws_lb_listener" "listener" {
   protocol          = var.listener_protocol
 
   default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404 Not Found"
+      status_code  = "404"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "custom_rule" {
+  listener_arn = aws_lb_listener.listener.arn
+  priority     = var.listener_priority
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.tg.arn
+  }
+
+  dynamic "condition" {
+    for_each = var.listener_conditions
+    content {
+      path_pattern {
+        values = [condition.value["path_pattern"]]
+      }
+    }
   }
 }
