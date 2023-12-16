@@ -42,7 +42,7 @@ Bu repo, Terraform ile AWS üzerinde highly available ve scalable bir web uygula
 
 Subnet CIDR'ları maksimum IP alabilecek şekilde ayarlanmıştır. Bu ileriye dönük scale olma halinde IP tükenmesi durumundan korunabilmek içindir.
 
-Her AZ için, bir NAT Gateway oluşturulmuştur. Bu yapı AZ'leri birbirinden izole eder. Bir AZ'de sorun olması veya bir AZ'nin route table'ında sorunlu bir konfigürasyon yapılması durumunda, diğer AZ'ler bundan etkilenmez ve internete bağlantıları kesilmez. Bu tercih projeden projeye değişebilmekle birlikte, highly available olmanın hayati olduğu projelerde en az iki NAT Gateway konfigüre etmek önemlidir.
+Her AZ için, bir NAT Gateway oluşturulmuştur. Bu yapı AZ'leri birbirinden izole eder. Bir AZ'de sorun olması veya bir AZ'nin route table'ında sorunlu bir konfigürasyon yapılması durumunda, diğer AZ'ler bundan etkilenmez ve internet bağlantıları kesilmez. Bu tercih projeden projeye değişebilmekle birlikte, highly available olmanın hayati olduğu projelerde en az iki NAT Gateway konfigüre etmek önemlidir.
 
 Backend ECS servisi private subnetlerde çalışmakta olduğundan, IP filtering yapan external kaynaklara erişebilmesi için NAT Gateway'in dışarı çıkan IP adreslerini ilgili yetkililere beyan etmek yeterli olacaktır.
 
