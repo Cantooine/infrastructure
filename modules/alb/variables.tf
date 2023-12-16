@@ -98,4 +98,3 @@ variable "listener_conditions" {
   }))
   default = []
 }
-
