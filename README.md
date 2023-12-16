@@ -51,3 +51,5 @@ Frontend, backend ile internal load balancer üzerinden iletişim kurar. Service
 ECS servisleri için autoscaling ayarlanmıştır. Bu scalablity'nin sağlanmasını gözetir. Projenin ihtiyacına göre scaling ayarları Terraform üzerinden yapılandırılabilir.
 
 ECS servisleri FARGATE ile çalıştırılmaktadır. FARGATE, EC2'ya kıyasla cost-effective ve yönetimi kolay bir çözümdür (FARGATE'de kullanılan kadar ödenirken, EC2'da devamlı ödeme gerekmektedir).
+
+Proje PoC niteliğinde olduğundan, doğrudan kullanıma uygun değildir. tfstate dosyasının nerede nasıl saklanacağını ayarlamak, birden fazla kişinin çalıştığı projelerde state lock mekanizması oluşturmak, external ALB için WAF ve SSL yapılandırmaları yapmak önemlidir.
